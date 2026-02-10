@@ -1,19 +1,18 @@
 import { NextResponse } from 'next/server';
-import { getStats } from '@/lib/database';
+
+// Demo stats - in production, connect to a database
+const stats = {
+  total_trades: 0,
+  winning_trades: 0,
+  total_profit: 0,
+  total_volume: 0,
+  holdings_count: 0,
+  portfolio_value: 500,
+  win_rate: '0',
+  status: 'SCANNING',
+  wallet: '0x55bbaE00Eebad7e3bBab0Da5C98C8F4011cEfe64'
+};
 
 export async function GET() {
-  try {
-    const stats = getStats();
-    return NextResponse.json(stats);
-  } catch (error) {
-    return NextResponse.json({
-      total_trades: 0,
-      winning_trades: 0,
-      total_profit: 0,
-      total_volume: 0,
-      holdings_count: 0,
-      portfolio_value: 0,
-      win_rate: '0'
-    });
-  }
+  return NextResponse.json(stats);
 }
