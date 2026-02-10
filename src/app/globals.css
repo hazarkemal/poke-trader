@@ -25,8 +25,8 @@ body {
   font-family: 'Press Start 2P', monospace;
   background: var(--bg);
   color: var(--text);
-  font-size: 10px;
-  line-height: 2;
+  font-size: 12px;
+  line-height: 2.2;
 }
 
 /* Pixel Box */
@@ -114,13 +114,13 @@ body {
 }
 
 .stat-value {
-  font-size: 16px;
+  font-size: 20px;
   color: var(--primary);
   text-shadow: 2px 2px 0 #0d0f1a;
 }
 
 .stat-label {
-  font-size: 6px;
+  font-size: 9px;
   color: var(--text-muted);
   margin-top: 4px;
 }

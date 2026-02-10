@@ -83,7 +83,7 @@ export default function Dashboard() {
           />
           <div>
             <h1 className="text-sm text-white">POKETRADER</h1>
-            <p className="text-[6px] text-red-200">AUTONOMOUS CARD HUNTER v1.0</p>
+            <p className="text-[9px] text-red-200">AUTONOMOUS CARD HUNTER v1.0</p>
           </div>
           <div className="ml-auto flex items-center gap-4">
             <span className={`pixel-badge ${stats.balance_usdc > 0 ? 'online' : 'warning'}`}>
@@ -109,7 +109,7 @@ export default function Dashboard() {
               <button
                 key={t.id}
                 onClick={() => setTab(t.id as any)}
-                className={`pixel-btn text-[8px] ${tab === t.id ? 'active' : ''}`}
+                className={`pixel-btn text-[11px] ${tab === t.id ? 'active' : ''}`}
               >
                 {t.icon} {t.label}
               </button>
@@ -147,8 +147,8 @@ export default function Dashboard() {
                 {/* HP Bar */}
                 <div className="pixel-box p-4">
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-[8px]">PORTFOLIO HP</span>
-                    <span className="text-[8px] text-[var(--primary)]">
+                    <span className="text-[11px]">PORTFOLIO HP</span>
+                    <span className="text-[11px] text-[var(--primary)]">
                       ${stats.balance_usdc.toFixed(0)}/500
                     </span>
                   </div>
@@ -163,23 +163,23 @@ export default function Dashboard() {
                 {/* Recent Trades */}
                 <div className="pixel-box">
                   <div className="p-3 border-b-2 border-[var(--border)]">
-                    <span className="text-[8px] text-[var(--primary)]">▶ RECENT BATTLES</span>
+                    <span className="text-[11px] text-[var(--primary)]">▶ RECENT BATTLES</span>
                   </div>
                   <div className="p-2">
                     {trades.length === 0 ? (
                       <div className="text-center py-6 text-[var(--text-muted)]">
                         <div className="text-2xl mb-2">🎴</div>
-                        <p className="text-[8px]">No trades yet!</p>
-                        <p className="text-[6px]">Deposit funds to start hunting</p>
+                        <p className="text-[11px]">No trades yet!</p>
+                        <p className="text-[9px]">Deposit funds to start hunting</p>
                       </div>
                     ) : (
                       trades.slice(0, 5).map(t => (
                         <div key={t.id} className={`trade-entry ${t.type}`}>
                           <div className="flex justify-between">
-                            <span className="text-[8px]">{t.type.toUpperCase()}</span>
-                            <span className="text-[8px]">${t.price_usd.toFixed(2)}</span>
+                            <span className="text-[11px]">{t.type.toUpperCase()}</span>
+                            <span className="text-[11px]">${t.price_usd.toFixed(2)}</span>
                           </div>
-                          <div className="text-[10px] text-[var(--primary)]">{t.card_name}</div>
+                          <div className="text-[13px] text-[var(--primary)]">{t.card_name}</div>
                         </div>
                       ))
                     )}
@@ -192,7 +192,7 @@ export default function Dashboard() {
             {tab === 'pokemon' && (
               <div className="pixel-box p-4">
                 <div className="text-center mb-4">
-                  <span className="text-[8px] text-[var(--primary)]">▶ CARD COLLECTION</span>
+                  <span className="text-[11px] text-[var(--primary)]">▶ CARD COLLECTION</span>
                 </div>
                 {holdings.length === 0 ? (
                   <div className="text-center py-8">
@@ -206,16 +206,16 @@ export default function Dashboard() {
                         />
                       ))}
                     </div>
-                    <p className="text-[10px] text-[var(--text-muted)]">Your party is empty!</p>
-                    <p className="text-[8px] text-[var(--text-muted)]">Deposit USDC to catch cards</p>
+                    <p className="text-[13px] text-[var(--text-muted)]">Your party is empty!</p>
+                    <p className="text-[11px] text-[var(--text-muted)]">Deposit USDC to catch cards</p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 gap-4">
                     {holdings.map(h => (
                       <div key={h.card_id} className="card-frame">
                         <div className="card-inner text-center">
-                          <div className="text-[10px] text-[var(--primary)]">{h.card_name}</div>
-                          <div className="text-[8px] text-[var(--text-muted)]">
+                          <div className="text-[13px] text-[var(--primary)]">{h.card_name}</div>
+                          <div className="text-[11px] text-[var(--text-muted)]">
                             ${h.buy_price.toFixed(2)}
                           </div>
                         </div>
@@ -230,31 +230,31 @@ export default function Dashboard() {
             {tab === 'bag' && (
               <div className="pixel-box p-4">
                 <div className="text-center mb-4">
-                  <span className="text-[8px] text-[var(--primary)]">▶ TRAINER BAG</span>
+                  <span className="text-[11px] text-[var(--primary)]">▶ TRAINER BAG</span>
                 </div>
                 <div className="space-y-4">
                   <div className="flex justify-between items-center p-3 bg-[var(--bg)] border-2 border-[var(--border)]">
-                    <span className="text-[8px]">💰 USDC</span>
-                    <span className="text-[10px] text-[var(--primary)]">${stats.balance_usdc.toFixed(2)}</span>
+                    <span className="text-[11px]">💰 USDC</span>
+                    <span className="text-[13px] text-[var(--primary)]">${stats.balance_usdc.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between items-center p-3 bg-[var(--bg)] border-2 border-[var(--border)]">
-                    <span className="text-[8px]">⛽ MATIC</span>
-                    <span className="text-[10px] text-[var(--primary)]">{stats.balance_matic.toFixed(4)}</span>
+                    <span className="text-[11px]">⛽ MATIC</span>
+                    <span className="text-[13px] text-[var(--primary)]">{stats.balance_matic.toFixed(4)}</span>
                   </div>
                   <div className="flex justify-between items-center p-3 bg-[var(--bg)] border-2 border-[var(--border)]">
-                    <span className="text-[8px]">🎴 CARDS</span>
-                    <span className="text-[10px] text-[var(--primary)]">{holdings.length}</span>
+                    <span className="text-[11px]">🎴 CARDS</span>
+                    <span className="text-[13px] text-[var(--primary)]">{holdings.length}</span>
                   </div>
                   
                   <div className="mt-6 p-3 bg-[var(--bg)] border-2 border-[var(--border)]">
-                    <div className="text-[6px] text-[var(--text-muted)] mb-2">WALLET ADDRESS</div>
-                    <div className="text-[6px] break-all text-[var(--primary)]">{WALLET}</div>
+                    <div className="text-[9px] text-[var(--text-muted)] mb-2">WALLET ADDRESS</div>
+                    <div className="text-[9px] break-all text-[var(--primary)]">{WALLET}</div>
                   </div>
                   
                   <a 
                     href={`https://polygonscan.com/address/${WALLET}`}
                     target="_blank"
-                    className="pixel-btn block text-center text-[8px]"
+                    className="pixel-btn block text-center text-[11px]"
                   >
                     VIEW ON POLYGONSCAN →
                   </a>
@@ -266,7 +266,7 @@ export default function Dashboard() {
             {tab === 'brain' && (
               <div className="pixel-box p-4">
                 <div className="text-center mb-4">
-                  <span className="text-[8px] text-[var(--primary)]">▶ AGENT THOUGHTS</span>
+                  <span className="text-[11px] text-[var(--primary)]">▶ AGENT THOUGHTS</span>
                 </div>
                 <div className="space-y-2 max-h-64 overflow-y-auto">
                   {[
@@ -276,7 +276,7 @@ export default function Dashboard() {
                     { time: '02:25', type: 'SCAN', msg: 'Monitoring TCGPlayer prices...' },
                     { time: '02:24', type: 'LEARN', msg: 'No trades yet - building knowledge' },
                   ].map((t, i) => (
-                    <div key={i} className="p-2 bg-[var(--bg)] border border-[var(--border)] text-[8px]">
+                    <div key={i} className="p-2 bg-[var(--bg)] border border-[var(--border)] text-[11px]">
                       <span className="text-[var(--text-muted)]">[{t.time}]</span>
                       <span className={`ml-2 ${
                         t.type === 'SCAN' ? 'text-[var(--info)]' :
@@ -290,19 +290,19 @@ export default function Dashboard() {
                 </div>
                 
                 <div className="mt-4 pixel-box p-3">
-                  <div className="text-[6px] text-[var(--text-muted)] mb-2">STRATEGY</div>
+                  <div className="text-[9px] text-[var(--text-muted)] mb-2">STRATEGY</div>
                   <div className="grid grid-cols-3 gap-2 text-center">
                     <div>
-                      <div className="text-[var(--secondary)] text-[10px]">-15%</div>
-                      <div className="text-[6px] text-[var(--text-muted)]">BUY</div>
+                      <div className="text-[var(--secondary)] text-[13px]">-15%</div>
+                      <div className="text-[9px] text-[var(--text-muted)]">BUY</div>
                     </div>
                     <div>
-                      <div className="text-[var(--primary)] text-[10px]">+10%</div>
-                      <div className="text-[6px] text-[var(--text-muted)]">SELL</div>
+                      <div className="text-[var(--primary)] text-[13px]">+10%</div>
+                      <div className="text-[9px] text-[var(--text-muted)]">SELL</div>
                     </div>
                     <div>
-                      <div className="text-[var(--danger)] text-[10px]">-20%</div>
-                      <div className="text-[6px] text-[var(--text-muted)]">STOP</div>
+                      <div className="text-[var(--danger)] text-[13px]">-20%</div>
+                      <div className="text-[9px] text-[var(--text-muted)]">STOP</div>
                     </div>
                   </div>
                 </div>
@@ -313,7 +313,7 @@ export default function Dashboard() {
 
         {/* Message Box */}
         <div className="message-box">
-          <span className="text-[10px]">{message}</span>
+          <span className="text-[13px]">{message}</span>
         </div>
 
         {/* Footer */}
@@ -328,7 +328,7 @@ export default function Dashboard() {
               />
             ))}
           </div>
-          <p className="text-[6px] text-[var(--text-muted)]">
+          <p className="text-[9px] text-[var(--text-muted)]">
             POKETRADER v1.0 • 
             <a href="https://github.com/hazarkemal/poke-trader" target="_blank" className="text-[var(--info)]"> GITHUB</a> • 
             OPEN SOURCE
