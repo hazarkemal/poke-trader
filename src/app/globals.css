@@ -2,119 +2,53 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+/* Classic Game Boy Pokemon Font */
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
 :root {
-  --poke-red: #CC0000;
-  --poke-blue: #3B4CCA;
-  --poke-yellow: #FFDE00;
-  --poke-gold: #B3A125;
-  --gameboy-green: #0f380f;
-  --gameboy-light: #9bbc0f;
-  --gameboy-dark: #306230;
+  /* Original Game Boy Colors */
+  --gb-darkest: #0f380f;
+  --gb-dark: #306230;
+  --gb-light: #8bac0f;
+  --gb-lightest: #9bbc0f;
+  
+  /* Pokemon Red/Blue Era */
+  --poke-red: #ff1111;
+  --poke-blue: #1111ff;
+  --poke-yellow: #ffcc00;
 }
 
 * {
   image-rendering: pixelated;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html {
+  font-size: 16px;
 }
 
 body {
-  font-family: 'VT323', monospace;
-  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  font-family: 'Press Start 2P', monospace;
+  background-color: var(--gb-lightest);
+  color: var(--gb-darkest);
   min-height: 100vh;
+  font-size: 10px;
+  line-height: 1.8;
 }
 
-.pixel-font {
-  font-family: 'Press Start 2P', cursive;
-}
-
-.retro-card {
-  background: linear-gradient(145deg, #2d2d44 0%, #1a1a2e 100%);
-  border: 4px solid #ffde00;
-  border-radius: 0;
+/* Game Boy Screen Effect */
+.gb-screen {
+  background: var(--gb-lightest);
+  border: 8px solid var(--gb-darkest);
   box-shadow: 
-    8px 8px 0 #000,
-    inset 2px 2px 0 rgba(255,255,255,0.1);
+    inset 4px 4px 0 var(--gb-light),
+    inset -4px -4px 0 var(--gb-dark),
+    8px 8px 0 var(--gb-darkest);
   position: relative;
 }
 
-.retro-card::before {
-  content: '';
-  position: absolute;
-  top: -2px;
-  left: -2px;
-  right: -2px;
-  bottom: -2px;
-  background: linear-gradient(45deg, #cc0000, #3b4cca, #ffde00, #cc0000);
-  z-index: -1;
-  filter: blur(4px);
-  opacity: 0.5;
-}
-
-.pokeball-bg {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='none' stroke='%23333' stroke-width='2'/%3E%3Cpath d='M5 50h90' stroke='%23333' stroke-width='2'/%3E%3Ccircle cx='50' cy='50' r='12' fill='none' stroke='%23333' stroke-width='2'/%3E%3C/svg%3E");
-  background-size: 50px;
-  background-repeat: repeat;
-  opacity: 0.05;
-}
-
-.stat-value {
-  font-family: 'Press Start 2P', cursive;
-  color: #9bbc0f;
-  text-shadow: 2px 2px 0 #0f380f;
-}
-
-.pixel-border {
-  border: 4px solid;
-  border-image: linear-gradient(45deg, #ffde00, #cc0000) 1;
-}
-
-.trade-row {
-  border-left: 4px solid;
-  transition: all 0.2s;
-}
-
-.trade-row:hover {
-  transform: translateX(4px);
-}
-
-.trade-buy {
-  border-left-color: #00ff00;
-  background: linear-gradient(90deg, rgba(0,255,0,0.1) 0%, transparent 100%);
-}
-
-.trade-sell {
-  border-left-color: #ff0000;
-  background: linear-gradient(90deg, rgba(255,0,0,0.1) 0%, transparent 100%);
-}
-
-@keyframes blink {
-  0%, 50% { opacity: 1; }
-  51%, 100% { opacity: 0; }
-}
-
-.blink {
-  animation: blink 1s infinite;
-}
-
-@keyframes scan {
-  0% { transform: translateY(-100%); }
-  100% { transform: translateY(100%); }
-}
-
-.scan-line {
-  position: absolute;
-  width: 100%;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, #9bbc0f, transparent);
-  animation: scan 2s linear infinite;
-}
-
-.crt-effect {
-  position: relative;
-}
-
-.crt-effect::after {
+.gb-screen::before {
   content: '';
   position: absolute;
   top: 0;
@@ -123,21 +57,183 @@ body {
   bottom: 0;
   background: repeating-linear-gradient(
     0deg,
-    rgba(0, 0, 0, 0.1),
-    rgba(0, 0, 0, 0.1) 1px,
-    transparent 1px,
-    transparent 2px
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.03) 2px,
+    rgba(0, 0, 0, 0.03) 4px
   );
   pointer-events: none;
 }
 
-.pokemon-card-frame {
-  background: linear-gradient(135deg, #f7d02c 0%, #eec32d 50%, #d4a017 100%);
-  padding: 8px;
-  border-radius: 12px;
+/* Pokemon Dialog Box */
+.pokemon-box {
+  background: var(--gb-lightest);
+  border: 4px solid var(--gb-darkest);
+  padding: 16px;
+  position: relative;
 }
 
-.typing-cursor::after {
-  content: '▋';
-  animation: blink 0.7s infinite;
+.pokemon-box::before {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  right: 4px;
+  bottom: 4px;
+  border: 2px solid var(--gb-dark);
+  pointer-events: none;
+}
+
+/* Menu Selection Arrow */
+.menu-arrow {
+  display: inline-block;
+  width: 0;
+  height: 0;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  border-left: 8px solid var(--gb-darkest);
+  margin-right: 8px;
+}
+
+.menu-item {
+  padding: 4px 8px;
+  cursor: pointer;
+  transition: none;
+}
+
+.menu-item:hover,
+.menu-item.active {
+  background: var(--gb-dark);
+  color: var(--gb-lightest);
+}
+
+/* HP Bar Style */
+.hp-bar {
+  height: 8px;
+  background: var(--gb-dark);
+  border: 2px solid var(--gb-darkest);
+}
+
+.hp-bar-fill {
+  height: 100%;
+  background: var(--gb-darkest);
+  transition: width 0.3s ease;
+}
+
+.hp-bar-fill.high { background: var(--gb-darkest); }
+.hp-bar-fill.medium { background: #cc8800; }
+.hp-bar-fill.low { background: #cc0000; }
+
+/* Pixelated Buttons */
+.pixel-btn {
+  background: var(--gb-light);
+  border: 4px solid var(--gb-darkest);
+  padding: 8px 16px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  cursor: pointer;
+  text-transform: uppercase;
+  box-shadow: 4px 4px 0 var(--gb-darkest);
+  transition: none;
+}
+
+.pixel-btn:hover {
+  background: var(--gb-dark);
+  color: var(--gb-lightest);
+}
+
+.pixel-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 var(--gb-darkest);
+}
+
+/* Blinking Cursor */
+@keyframes blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+.blink {
+  animation: blink 1s steps(1) infinite;
+}
+
+/* Scrolling Text Effect */
+@keyframes scroll-text {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+.scroll-text {
+  animation: scroll-text 20s linear infinite;
+}
+
+/* Pokemon Card Frame */
+.card-frame {
+  background: linear-gradient(180deg, #ffcc00 0%, #ff9900 100%);
+  border: 4px solid var(--gb-darkest);
+  padding: 4px;
+}
+
+.card-inner {
+  background: var(--gb-lightest);
+  border: 2px solid var(--gb-darkest);
+  padding: 8px;
+}
+
+/* Status Indicators */
+.status-online {
+  color: var(--gb-darkest);
+}
+
+.status-online::before {
+  content: '●';
+  margin-right: 4px;
+  animation: blink 1s steps(1) infinite;
+}
+
+/* Trade Colors */
+.trade-buy {
+  background: var(--gb-light);
+}
+
+.trade-sell {
+  background: var(--gb-dark);
+  color: var(--gb-lightest);
+}
+
+/* Stat Display */
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 2px dotted var(--gb-dark);
+  padding: 4px 0;
+}
+
+.stat-label {
+  text-transform: uppercase;
+}
+
+.stat-value {
+  font-weight: bold;
+}
+
+/* Loading Animation (Pokeball) */
+@keyframes pokeball-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading {
+  animation: pokeball-spin 1s linear infinite;
+}
+
+/* 8-bit Border Pattern */
+.border-8bit {
+  border-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAJklEQVQoU2NkYGD4z4AEGBkZGRmRJUCsdHR0NJAU4JWAqcBqAgDl4wgJyjAiPwAAAABJRU5ErkJggg==") 2 stretch;
+}
+
+/* No text selection for game feel */
+.no-select {
+  user-select: none;
+  -webkit-user-select: none;
 }

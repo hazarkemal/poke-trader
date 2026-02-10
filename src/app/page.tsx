@@ -2,17 +2,7 @@
 
 import { useState, useEffect } from 'react';
 
-// Agent Identity
-const AGENT = {
-  name: "PokeTrader",
-  version: "1.0.0",
-  wallet: "0x55bbaE00Eebad7e3bBab0Da5C98C8F4011cEfe64",
-  network: "Polygon",
-  github: "https://github.com/hazarkemal/poke-trader",
-  twitter: "https://twitter.com/PokeTraderAgent",
-  createdAt: "2026-02-10",
-  strategy: "Buy 15%+ undervalued, sell at 10% profit"
-};
+const WALLET = '0x55bbaE00Eebad7e3bBab0Da5C98C8F4011cEfe64';
 
 interface Stats {
   balance_usdc: number;
@@ -20,7 +10,6 @@ interface Stats {
   total_trades: number;
   winning_trades: number;
   total_profit: number;
-  portfolio_value: number;
   win_rate: number;
   status: string;
 }
@@ -38,391 +27,282 @@ interface Holding {
   card_id: string;
   card_name: string;
   buy_price: number;
-  current_price?: number;
-}
-
-interface Intel {
-  sentiment: string;
-  trending: string[];
-  recommendations: { action: string; card: string; reason: string }[];
 }
 
 export default function Dashboard() {
   const [stats, setStats] = useState<Stats>({
-    balance_usdc: 0,
-    balance_matic: 0,
-    total_trades: 0,
-    winning_trades: 0,
-    total_profit: 0,
-    portfolio_value: 0,
-    win_rate: 0,
-    status: 'SCANNING'
+    balance_usdc: 0, balance_matic: 0, total_trades: 0,
+    winning_trades: 0, total_profit: 0, win_rate: 0, status: 'SCANNING'
   });
   const [trades, setTrades] = useState<Trade[]>([]);
   const [holdings, setHoldings] = useState<Holding[]>([]);
-  const [intel, setIntel] = useState<Intel>({ sentiment: 'neutral', trending: [], recommendations: [] });
-  const [currentTime, setCurrentTime] = useState(new Date());
-  const [activeTab, setActiveTab] = useState<'stats' | 'trades' | 'intel' | 'about'>('stats');
+  const [menu, setMenu] = useState(0);
+  const [typing, setTyping] = useState('');
+  const [fullText, setFullText] = useState('POKETRADER is scanning the market for rare cards...');
 
+  // Typewriter effect
   useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    let i = 0;
+    const timer = setInterval(() => {
+      if (i <= fullText.length) {
+        setTyping(fullText.slice(0, i));
+        i++;
+      } else {
+        clearInterval(timer);
+      }
+    }, 50);
     return () => clearInterval(timer);
-  }, []);
+  }, [fullText]);
+
+  // Update status text based on state
+  useEffect(() => {
+    if (stats.balance_usdc > 10) {
+      setFullText('POKETRADER is actively hunting for undervalued cards!');
+    } else if (stats.total_trades > 0) {
+      setFullText(`Completed ${stats.total_trades} trades. Win rate: ${stats.win_rate}%`);
+    } else {
+      setFullText('Waiting for trainer to deposit funds... Send USDC to wallet!');
+    }
+  }, [stats]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [statsRes, tradesRes, holdingsRes, intelRes] = await Promise.all([
-          fetch('/api/stats'),
-          fetch('/api/trades'),
-          fetch('/api/holdings'),
-          fetch('/api/intel')
+        const [s, t, h] = await Promise.all([
+          fetch('/api/stats').then(r => r.json()),
+          fetch('/api/trades').then(r => r.json()),
+          fetch('/api/holdings').then(r => r.json())
         ]);
-        if (statsRes.ok) setStats(await statsRes.json());
-        if (tradesRes.ok) setTrades(await tradesRes.json());
-        if (holdingsRes.ok) setHoldings(await holdingsRes.json());
-        if (intelRes.ok) setIntel(await intelRes.json());
-      } catch (e) {
-        console.log('Fetching data...');
-      }
+        setStats(s);
+        setTrades(t);
+        setHoldings(h);
+      } catch (e) {}
     };
     fetchData();
-    const interval = setInterval(fetchData, 10000);
-    return () => clearInterval(interval);
+    const i = setInterval(fetchData, 10000);
+    return () => clearInterval(i);
   }, []);
 
+  const menuItems = ['STATUS', 'POKEMON', 'TRADES', 'ABOUT'];
+
   return (
-    <main className="min-h-screen p-4 md:p-8 pokeball-bg crt-effect">
-      {/* Header */}
-      <header className="retro-card p-4 mb-6">
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          <div className="flex items-center gap-4">
-            <div className="text-6xl">🎴</div>
-            <div>
-              <h1 className="pixel-font text-2xl md:text-3xl text-yellow-400">
-                POKETRADER
-              </h1>
-              <p className="text-gray-400 text-lg">Autonomous Pokemon Card Trading Agent</p>
-            </div>
-          </div>
-          <div className="text-right">
-            <div className="pixel-font text-green-400 text-sm flex items-center gap-2">
-              <span className="w-3 h-3 bg-green-500 rounded-full blink"></span>
-              {stats.status}
-            </div>
-            <div className="text-gray-500 text-sm font-mono">
-              {currentTime.toLocaleTimeString()}
-            </div>
-          </div>
+    <main className="min-h-screen p-4 no-select" style={{ background: '#9bbc0f' }}>
+      {/* Game Boy Header */}
+      <div className="max-w-2xl mx-auto">
+        <div className="text-center mb-4">
+          <div className="text-xs tracking-widest mb-1">◄ POKEMON ►</div>
+          <h1 className="text-base">POKETRADER</h1>
+          <div className="text-[8px] mt-1">AUTONOMOUS CARD TRADER v1.0</div>
         </div>
-      </header>
 
-      {/* Navigation */}
-      <nav className="flex gap-2 mb-6 flex-wrap">
-        {['stats', 'trades', 'intel', 'about'].map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab as any)}
-            className={`pixel-font text-xs px-4 py-2 border-4 transition-all ${
-              activeTab === tab
-                ? 'bg-yellow-400 text-black border-yellow-600'
-                : 'bg-gray-800 text-gray-400 border-gray-600 hover:border-yellow-400'
-            }`}
-          >
-            {tab.toUpperCase()}
-          </button>
-        ))}
-      </nav>
-
-      {/* Stats Tab */}
-      {activeTab === 'stats' && (
-        <div className="space-y-6">
-          {/* Wallet Status */}
-          <div className="retro-card p-6">
-            <h2 className="pixel-font text-yellow-400 text-sm mb-4">💳 WALLET STATUS</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <div className="text-gray-500 text-sm">USDC Balance</div>
-                <div className="stat-value text-2xl">${stats.balance_usdc.toFixed(2)}</div>
-              </div>
-              <div>
-                <div className="text-gray-500 text-sm">MATIC (Gas)</div>
-                <div className="stat-value text-2xl">{stats.balance_matic.toFixed(4)}</div>
-              </div>
-              <div>
-                <div className="text-gray-500 text-sm">Portfolio Value</div>
-                <div className="stat-value text-2xl">${stats.portfolio_value.toFixed(2)}</div>
-              </div>
-              <div>
-                <div className="text-gray-500 text-sm">Total P&L</div>
-                <div className={`stat-value text-2xl ${stats.total_profit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                  {stats.total_profit >= 0 ? '+' : ''}${stats.total_profit.toFixed(2)}
-                </div>
-              </div>
+        {/* Main Screen */}
+        <div className="gb-screen p-4 mb-4">
+          {/* Status Bar */}
+          <div className="flex justify-between items-center mb-4 pb-2 border-b-4 border-[#0f380f]">
+            <div className="flex items-center gap-2">
+              <span className="status-online text-[8px]">ONLINE</span>
             </div>
-            <div className="mt-4 p-3 bg-black/30 border border-gray-700">
-              <code className="text-xs text-gray-400 break-all">{AGENT.wallet}</code>
+            <div className="text-[8px]">
+              ${stats.balance_usdc.toFixed(2)} USDC
             </div>
           </div>
 
-          {/* Trading Stats */}
-          <div className="retro-card p-6">
-            <h2 className="pixel-font text-yellow-400 text-sm mb-4">📊 TRADING STATS</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <div className="text-gray-500 text-sm">Total Trades</div>
-                <div className="stat-value text-3xl">{stats.total_trades}</div>
-              </div>
-              <div>
-                <div className="text-gray-500 text-sm">Winning Trades</div>
-                <div className="stat-value text-3xl text-green-400">{stats.winning_trades}</div>
-              </div>
-              <div>
-                <div className="text-gray-500 text-sm">Win Rate</div>
-                <div className="stat-value text-3xl">{stats.win_rate.toFixed(1)}%</div>
-              </div>
-              <div>
-                <div className="text-gray-500 text-sm">Status</div>
-                <div className="stat-value text-xl">
-                  {stats.balance_usdc > 0 ? '🟢 ACTIVE' : '⏳ AWAITING FUNDS'}
-                </div>
-              </div>
-            </div>
+          {/* Menu */}
+          <div className="flex gap-2 mb-4">
+            {menuItems.map((item, i) => (
+              <button
+                key={item}
+                onClick={() => setMenu(i)}
+                className={`pixel-btn text-[8px] ${menu === i ? 'bg-[#306230] text-[#9bbc0f]' : ''}`}
+              >
+                {menu === i && <span className="menu-arrow"></span>}
+                {item}
+              </button>
+            ))}
           </div>
 
-          {/* Holdings */}
-          <div className="retro-card p-6">
-            <h2 className="pixel-font text-yellow-400 text-sm mb-4">🃏 CURRENT HOLDINGS ({holdings.length})</h2>
-            {holdings.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <div className="text-4xl mb-2">📭</div>
-                <p>No cards in portfolio yet</p>
-                <p className="text-sm">Fund wallet to start trading</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {holdings.map((h) => (
-                  <div key={h.card_id} className="pokemon-card-frame">
-                    <div className="bg-gray-900 p-4">
-                      <div className="text-white font-bold">{h.card_name}</div>
-                      <div className="text-gray-400 text-sm">Bought: ${h.buy_price.toFixed(2)}</div>
-                      {h.current_price && (
-                        <div className={h.current_price >= h.buy_price ? 'text-green-400' : 'text-red-400'}>
-                          Now: ${h.current_price.toFixed(2)}
-                        </div>
-                      )}
-                    </div>
+          {/* Content Area */}
+          <div className="pokemon-box min-h-[300px]">
+            {menu === 0 && (
+              <div className="space-y-4">
+                <div className="text-[10px] border-b-2 border-[#306230] pb-2 mb-4">
+                  ┌─────────────────────┐<br/>
+                  │    TRAINER CARD     │<br/>
+                  └─────────────────────┘
+                </div>
+                
+                <div className="stat-row">
+                  <span className="stat-label">FUNDS</span>
+                  <span className="stat-value">${stats.balance_usdc.toFixed(2)}</span>
+                </div>
+                <div className="stat-row">
+                  <span className="stat-label">GAS</span>
+                  <span className="stat-value">{stats.balance_matic.toFixed(4)} MATIC</span>
+                </div>
+                <div className="stat-row">
+                  <span className="stat-label">TRADES</span>
+                  <span className="stat-value">{stats.total_trades}</span>
+                </div>
+                <div className="stat-row">
+                  <span className="stat-label">WINS</span>
+                  <span className="stat-value">{stats.winning_trades}</span>
+                </div>
+                <div className="stat-row">
+                  <span className="stat-label">WIN RATE</span>
+                  <span className="stat-value">{stats.win_rate.toFixed(0)}%</span>
+                </div>
+                <div className="stat-row">
+                  <span className="stat-label">PROFIT</span>
+                  <span className={`stat-value ${stats.total_profit >= 0 ? '' : 'text-red-800'}`}>
+                    {stats.total_profit >= 0 ? '+' : ''}${stats.total_profit.toFixed(2)}
+                  </span>
+                </div>
+
+                {/* HP Bar style for portfolio health */}
+                <div className="mt-4">
+                  <div className="text-[8px] mb-1">PORTFOLIO HP</div>
+                  <div className="hp-bar">
+                    <div 
+                      className={`hp-bar-fill ${stats.balance_usdc > 400 ? 'high' : stats.balance_usdc > 200 ? 'medium' : 'low'}`}
+                      style={{ width: `${Math.min((stats.balance_usdc / 500) * 100, 100)}%` }}
+                    />
                   </div>
-                ))}
+                </div>
+              </div>
+            )}
+
+            {menu === 1 && (
+              <div>
+                <div className="text-[10px] border-b-2 border-[#306230] pb-2 mb-4">
+                  ┌─────────────────────┐<br/>
+                  │   POKEMON (CARDS)   │<br/>
+                  └─────────────────────┘
+                </div>
+                
+                {holdings.length === 0 ? (
+                  <div className="text-center py-8">
+                    <div className="text-[32px] mb-4">�Pokemon</div>
+                    <div className="text-[10px]">No POKEMON in party!</div>
+                    <div className="text-[8px] mt-2">Deposit funds to catch em all!</div>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {holdings.map((h, i) => (
+                      <div key={h.card_id} className="card-frame">
+                        <div className="card-inner">
+                          <div className="flex justify-between">
+                            <span>{h.card_name}</span>
+                            <span>${h.buy_price.toFixed(2)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {menu === 2 && (
+              <div>
+                <div className="text-[10px] border-b-2 border-[#306230] pb-2 mb-4">
+                  ┌─────────────────────┐<br/>
+                  │    TRADE HISTORY    │<br/>
+                  └─────────────────────┘
+                </div>
+                
+                {trades.length === 0 ? (
+                  <div className="text-center py-8">
+                    <div className="text-[10px]">No trades yet!</div>
+                    <div className="text-[8px] mt-2">Agent is scanning markets...</div>
+                  </div>
+                ) : (
+                  <div className="space-y-2 max-h-[200px] overflow-y-auto">
+                    {trades.slice(0, 10).map((t) => (
+                      <div 
+                        key={t.id} 
+                        className={`p-2 ${t.type === 'buy' ? 'trade-buy' : 'trade-sell'}`}
+                      >
+                        <div className="flex justify-between text-[8px]">
+                          <span>{t.type.toUpperCase()}</span>
+                          <span>${t.price_usd.toFixed(2)}</span>
+                        </div>
+                        <div className="text-[10px]">{t.card_name}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {menu === 3 && (
+              <div>
+                <div className="text-[10px] border-b-2 border-[#306230] pb-2 mb-4">
+                  ┌─────────────────────┐<br/>
+                  │       ABOUT         │<br/>
+                  └─────────────────────┘
+                </div>
+                
+                <div className="space-y-4 text-[8px]">
+                  <p>POKETRADER is an autonomous AI agent that hunts for undervalued Pokemon cards.</p>
+                  
+                  <div className="pokemon-box">
+                    <div className="text-[10px] mb-2">STRATEGY:</div>
+                    <div>• BUY at 15%+ discount</div>
+                    <div>• SELL at 10% profit</div>
+                    <div>• STOP LOSS at 20%</div>
+                  </div>
+                  
+                  <div className="pokemon-box">
+                    <div className="text-[10px] mb-2">SOURCES:</div>
+                    <div>• Reddit communities</div>
+                    <div>• Twitter sentiment</div>
+                    <div>• TCGPlayer prices</div>
+                    <div>• eBay sold data</div>
+                  </div>
+                  
+                  <div className="flex gap-2 mt-4">
+                    <a 
+                      href="https://github.com/hazarkemal/poke-trader"
+                      target="_blank"
+                      className="pixel-btn text-[8px]"
+                    >
+                      GITHUB
+                    </a>
+                    <a 
+                      href={`https://polygonscan.com/address/${WALLET}`}
+                      target="_blank"
+                      className="pixel-btn text-[8px]"
+                    >
+                      WALLET
+                    </a>
+                  </div>
+                </div>
               </div>
             )}
           </div>
-        </div>
-      )}
 
-      {/* Trades Tab */}
-      {activeTab === 'trades' && (
-        <div className="retro-card p-6">
-          <h2 className="pixel-font text-yellow-400 text-sm mb-4">📜 TRADE HISTORY</h2>
-          {trades.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
-              <div className="text-6xl mb-4">🔍</div>
-              <p className="pixel-font text-sm">NO TRADES YET</p>
-              <p className="mt-2">Agent is scanning for opportunities...</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {trades.map((trade) => (
-                <div
-                  key={trade.id}
-                  className={`trade-row p-4 ${trade.type === 'buy' ? 'trade-buy' : 'trade-sell'}`}
-                >
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <span className={`pixel-font text-xs px-2 py-1 ${
-                        trade.type === 'buy' ? 'bg-green-900 text-green-400' : 'bg-red-900 text-red-400'
-                      }`}>
-                        {trade.type.toUpperCase()}
-                      </span>
-                      <span className="ml-3 text-white">{trade.card_name}</span>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-white">${trade.price_usd.toFixed(2)}</div>
-                      {trade.profit_usd && (
-                        <div className={trade.profit_usd >= 0 ? 'text-green-400' : 'text-red-400'}>
-                          {trade.profit_usd >= 0 ? '+' : ''}${trade.profit_usd.toFixed(2)}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="text-gray-500 text-xs mt-1">
-                    {new Date(trade.timestamp).toLocaleString()}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Intel Tab */}
-      {activeTab === 'intel' && (
-        <div className="space-y-6">
-          <div className="retro-card p-6">
-            <h2 className="pixel-font text-yellow-400 text-sm mb-4">🧠 MARKET INTELLIGENCE</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <div className="text-gray-500 text-sm mb-2">Market Sentiment</div>
-                <div className={`pixel-font text-xl ${
-                  intel.sentiment === 'bullish' ? 'text-green-400' :
-                  intel.sentiment === 'bearish' ? 'text-red-400' : 'text-yellow-400'
-                }`}>
-                  {intel.sentiment?.toUpperCase() || 'SCANNING...'}
-                </div>
-              </div>
-              <div>
-                <div className="text-gray-500 text-sm mb-2">Trending Cards</div>
-                <div className="space-y-1">
-                  {intel.trending?.slice(0, 3).map((card, i) => (
-                    <div key={i} className="text-white">🔥 {card}</div>
-                  )) || <div className="text-gray-500">Gathering data...</div>}
-                </div>
-              </div>
-              <div>
-                <div className="text-gray-500 text-sm mb-2">Data Sources</div>
-                <div className="text-white space-y-1">
-                  <div>📰 Reddit</div>
-                  <div>🐦 Twitter</div>
-                  <div>💰 TCGPlayer</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="retro-card p-6">
-            <h2 className="pixel-font text-yellow-400 text-sm mb-4">🎯 RECOMMENDATIONS</h2>
-            {intel.recommendations?.length > 0 ? (
-              <div className="space-y-3">
-                {intel.recommendations.map((rec, i) => (
-                  <div key={i} className="p-3 bg-black/30 border border-gray-700">
-                    <div className="flex items-center gap-2">
-                      <span className={`pixel-font text-xs px-2 py-1 ${
-                        rec.action === 'buy' ? 'bg-green-900 text-green-400' :
-                        rec.action === 'sell' ? 'bg-red-900 text-red-400' :
-                        'bg-yellow-900 text-yellow-400'
-                      }`}>
-                        {rec.action.toUpperCase()}
-                      </span>
-                      <span className="text-white">{rec.card}</span>
-                    </div>
-                    <p className="text-gray-400 text-sm mt-1">{rec.reason}</p>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-gray-500 text-center py-4">
-                Analyzing market data...
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* About Tab */}
-      {activeTab === 'about' && (
-        <div className="space-y-6">
-          <div className="retro-card p-6">
-            <h2 className="pixel-font text-yellow-400 text-sm mb-4">🤖 ABOUT POKETRADER</h2>
-            <div className="space-y-4 text-gray-300">
-              <p>
-                PokeTrader is an <span className="text-yellow-400">autonomous AI agent</span> that 
-                trades Pokemon cards on the blockchain. It scans multiple marketplaces, analyzes 
-                community sentiment, and executes trades automatically.
-              </p>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <div className="text-gray-500">Version</div>
-                  <div>{AGENT.version}</div>
-                </div>
-                <div>
-                  <div className="text-gray-500">Network</div>
-                  <div>{AGENT.network}</div>
-                </div>
-                <div>
-                  <div className="text-gray-500">Created</div>
-                  <div>{AGENT.createdAt}</div>
-                </div>
-                <div>
-                  <div className="text-gray-500">Strategy</div>
-                  <div>{AGENT.strategy}</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="retro-card p-6">
-            <h2 className="pixel-font text-yellow-400 text-sm mb-4">⚙️ HOW IT WORKS</h2>
-            <div className="space-y-3 text-gray-300">
-              <div className="flex items-start gap-3">
-                <span className="text-2xl">1️⃣</span>
-                <div>
-                  <div className="text-white">Scan Markets</div>
-                  <div className="text-sm text-gray-500">Monitors Courtyard, TCGPlayer, eBay for listings</div>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <span className="text-2xl">2️⃣</span>
-                <div>
-                  <div className="text-white">Analyze Value</div>
-                  <div className="text-sm text-gray-500">Compares prices across sources, finds undervalued cards</div>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <span className="text-2xl">3️⃣</span>
-                <div>
-                  <div className="text-white">Execute Trades</div>
-                  <div className="text-sm text-gray-500">Buys at 15%+ discount, sells at 10% profit target</div>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <span className="text-2xl">4️⃣</span>
-                <div>
-                  <div className="text-white">Learn & Adapt</div>
-                  <div className="text-sm text-gray-500">Tracks community sentiment, adjusts strategy</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="retro-card p-6">
-            <h2 className="pixel-font text-yellow-400 text-sm mb-4">🔗 LINKS</h2>
-            <div className="flex flex-wrap gap-4">
-              <a
-                href={AGENT.github}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 border border-gray-600 transition-colors"
-              >
-                <span>📂</span> GitHub (Open Source)
-              </a>
-              <a
-                href={`https://polygonscan.com/address/${AGENT.wallet}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 border border-gray-600 transition-colors"
-              >
-                <span>🔍</span> View on PolygonScan
-              </a>
+          {/* Dialog Box */}
+          <div className="pokemon-box mt-4">
+            <div className="text-[10px] min-h-[40px]">
+              {typing}<span className="blink">▼</span>
             </div>
           </div>
         </div>
-      )}
 
-      {/* Footer */}
-      <footer className="mt-8 text-center text-gray-500 text-sm">
-        <p>PokeTrader v{AGENT.version} • Powered by AI • Open Source</p>
-        <p className="mt-1">Trading involves risk. Past performance ≠ future results.</p>
-      </footer>
+        {/* Wallet Address */}
+        <div className="pokemon-box text-center">
+          <div className="text-[8px] mb-2">DEPOSIT ADDRESS (POLYGON)</div>
+          <div className="text-[6px] break-all bg-[#8bac0f] p-2 border-2 border-[#0f380f]">
+            {WALLET}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="text-center mt-4 text-[6px]">
+          <div>© 2026 POKETRADER • OPEN SOURCE</div>
+          <div className="mt-1">NOT FINANCIAL ADVICE • TRADE AT YOUR OWN RISK</div>
+        </div>
+      </div>
     </main>
   );
 }
