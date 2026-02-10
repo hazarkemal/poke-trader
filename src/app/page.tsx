@@ -1,15 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 
 const WALLET = '0x55bbaE00Eebad7e3bBab0Da5C98C8F4011cEfe64';
-const POKEMON_SPRITES = [
-  'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/6.png', // Charizard
-  'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png', // Pikachu
-  'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/150.png', // Mewtwo
-  'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/249.png', // Lugia
-  'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/384.png', // Rayquaza
-];
 
 interface Stats {
   balance_usdc: number;
@@ -17,7 +10,6 @@ interface Stats {
   total_trades: number;
   winning_trades: number;
   total_profit: number;
-  portfolio_value: number;
   win_rate: number;
   status: string;
 }
@@ -29,484 +21,319 @@ interface Trade {
   card_name: string;
   price_usd: number;
   profit_usd?: number;
-  reasoning?: string;
 }
 
 interface Holding {
   card_id: string;
   card_name: string;
   buy_price: number;
-  current_price?: number;
-  pnl_pct?: number;
-}
-
-interface Intel {
-  sentiment: string;
-  trending: { card: string; score: number; change?: string }[];
-  recommendations: { action: string; card: string; reason: string; confidence: number }[];
-  sources: { reddit: string[]; twitter: string[]; prices: string[] };
-  lastScan: string;
-  marketMetrics?: { totalVolume24h: string; avgPriceChange: string; topGainer: string; topLoser: string };
-}
-
-interface ThoughtLog {
-  timestamp: string;
-  type: 'scan' | 'analysis' | 'decision' | 'trade' | 'learn';
-  message: string;
 }
 
 export default function Dashboard() {
   const [stats, setStats] = useState<Stats>({
     balance_usdc: 0, balance_matic: 0, total_trades: 0,
-    winning_trades: 0, total_profit: 0, portfolio_value: 0,
-    win_rate: 0, status: 'INITIALIZING'
+    winning_trades: 0, total_profit: 0, win_rate: 0, status: 'SCANNING'
   });
   const [trades, setTrades] = useState<Trade[]>([]);
   const [holdings, setHoldings] = useState<Holding[]>([]);
-  const [intel, setIntel] = useState<Intel | null>(null);
-  const [thoughts, setThoughts] = useState<ThoughtLog[]>([]);
-  const [tab, setTab] = useState<'overview' | 'portfolio' | 'trades' | 'intel' | 'brain'>('overview');
-  const [lastUpdate, setLastUpdate] = useState(new Date());
+  const [tab, setTab] = useState<'status' | 'pokemon' | 'bag' | 'brain'>('status');
+  const [message, setMessage] = useState('');
+  const [fullMessage] = useState('POKETRADER is scanning markets for rare cards...');
+  const [msgIndex, setMsgIndex] = useState(0);
 
-  const fetchData = useCallback(async () => {
-    try {
-      const [statsRes, tradesRes, holdingsRes, intelRes] = await Promise.all([
-        fetch('/api/stats'),
-        fetch('/api/trades'),
-        fetch('/api/holdings'),
-        fetch('/api/intel')
-      ]);
-      if (statsRes.ok) setStats(await statsRes.json());
-      if (tradesRes.ok) setTrades(await tradesRes.json());
-      if (holdingsRes.ok) setHoldings(await holdingsRes.json());
-      if (intelRes.ok) setIntel(await intelRes.json());
-      setLastUpdate(new Date());
-      
-      // Simulate thought process
-      addThought('scan', 'Scanning Reddit, Twitter, TCGPlayer for opportunities...');
-    } catch (e) {
-      console.log('Fetching...');
+  // Typewriter effect
+  useEffect(() => {
+    if (msgIndex < fullMessage.length) {
+      const timer = setTimeout(() => {
+        setMessage(fullMessage.slice(0, msgIndex + 1));
+        setMsgIndex(i => i + 1);
+      }, 30);
+      return () => clearTimeout(timer);
     }
-  }, []);
-
-  const addThought = (type: ThoughtLog['type'], message: string) => {
-    setThoughts(prev => [{
-      timestamp: new Date().toISOString(),
-      type,
-      message
-    }, ...prev].slice(0, 50));
-  };
+  }, [msgIndex, fullMessage]);
 
   useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [s, t, h] = await Promise.all([
+          fetch('/api/stats').then(r => r.json()),
+          fetch('/api/trades').then(r => r.json()),
+          fetch('/api/holdings').then(r => r.json())
+        ]);
+        setStats(s);
+        setTrades(t);
+        setHoldings(h);
+      } catch {}
+    };
     fetchData();
-    const interval = setInterval(fetchData, 15000);
-    return () => clearInterval(interval);
-  }, [fetchData]);
-
-  useEffect(() => {
-    // Initial thoughts
-    const initialThoughts: ThoughtLog[] = [
-      { timestamp: new Date().toISOString(), type: 'scan', message: 'Initializing market scanners...' },
-      { timestamp: new Date(Date.now() - 5000).toISOString(), type: 'analysis', message: 'Loading price history from TCGPlayer, eBay, PriceCharting' },
-      { timestamp: new Date(Date.now() - 10000).toISOString(), type: 'decision', message: 'Strategy: Buy at 15%+ discount, sell at 10% profit' },
-    ];
-    setThoughts(initialThoughts);
+    const i = setInterval(fetchData, 15000);
+    return () => clearInterval(i);
   }, []);
-
-  const getStatusBadge = () => {
-    if (stats.balance_usdc > 10) return <span className="badge badge-online">● TRADING</span>;
-    if (stats.status === 'SCANNING') return <span className="badge badge-scanning">◐ SCANNING</span>;
-    return <span className="badge badge-offline">○ AWAITING FUNDS</span>;
-  };
 
   return (
-    <main className="min-h-screen">
-      {/* Header */}
-      <header className="border-b border-[var(--border)] bg-white sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <img 
-                src={POKEMON_SPRITES[0]} 
-                alt="Charizard" 
-                className="w-10 h-10 pokemon-sprite"
-              />
-              <div>
-                <h1 className="text-xl font-bold">PokeTrader</h1>
-                <p className="text-xs text-[var(--text-muted)]">Autonomous Card Trading Agent</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              {getStatusBadge()}
-              <a 
-                href="https://github.com/hazarkemal/poke-trader"
-                target="_blank"
-                className="text-sm text-[var(--text-muted)] hover:text-[var(--text)]"
-              >
-                GitHub →
-              </a>
-            </div>
+    <main className="min-h-screen p-4 scanlines">
+      <div className="max-w-4xl mx-auto">
+        
+        {/* Header */}
+        <div className="pixel-header mb-6">
+          <img 
+            src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/6.png"
+            alt="Charizard"
+            className="w-12 h-12 pokemon-sprite"
+          />
+          <div>
+            <h1 className="text-sm text-white">POKETRADER</h1>
+            <p className="text-[6px] text-red-200">AUTONOMOUS CARD HUNTER v1.0</p>
+          </div>
+          <div className="ml-auto flex items-center gap-4">
+            <span className={`pixel-badge ${stats.balance_usdc > 0 ? 'online' : 'warning'}`}>
+              {stats.balance_usdc > 0 ? '● HUNTING' : '◐ WAITING'}
+            </span>
           </div>
         </div>
-      </header>
 
-      {/* Tabs */}
-      <div className="border-b border-[var(--border)] bg-white">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="tabs">
-            {(['overview', 'portfolio', 'trades', 'intel', 'brain'] as const).map(t => (
+        {/* Main Window */}
+        <div className="poke-window mb-6">
+          <div className="poke-window-title">
+            ═══════════════════ TRAINER DASHBOARD ═══════════════════
+          </div>
+          
+          {/* Tabs */}
+          <div className="pixel-tabs">
+            {[
+              { id: 'status', label: 'STATUS', icon: '📊' },
+              { id: 'pokemon', label: 'POKEMON', icon: '🎴' },
+              { id: 'bag', label: 'BAG', icon: '🎒' },
+              { id: 'brain', label: 'BRAIN', icon: '🧠' }
+            ].map(t => (
               <button
-                key={t}
-                onClick={() => setTab(t)}
-                className={`tab ${tab === t ? 'active' : ''}`}
+                key={t.id}
+                onClick={() => setTab(t.id as any)}
+                className={`pixel-btn text-[8px] ${tab === t.id ? 'active' : ''}`}
               >
-                {t === 'overview' && '📊'} 
-                {t === 'portfolio' && '🎴'} 
-                {t === 'trades' && '📜'} 
-                {t === 'intel' && '🧠'} 
-                {t === 'brain' && '💭'} 
-                {' '}{t.charAt(0).toUpperCase() + t.slice(1)}
+                {t.icon} {t.label}
               </button>
             ))}
           </div>
-        </div>
-      </div>
 
-      <div className="max-w-6xl mx-auto px-4 py-6">
-        {/* Overview Tab */}
-        {tab === 'overview' && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Stats */}
-            <div className="lg:col-span-2 space-y-6">
-              <div className="card">
-                <div className="card-header">
-                  <span>📈</span> Performance
+          {/* Content */}
+          <div className="p-4">
+            
+            {/* Status Tab */}
+            {tab === 'status' && (
+              <div className="space-y-6">
+                {/* Stats Grid */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="stat-display">
+                    <div className="stat-value">${stats.balance_usdc.toFixed(2)}</div>
+                    <div className="stat-label">POKÉDOLLARS</div>
+                  </div>
+                  <div className="stat-display">
+                    <div className="stat-value" style={{ color: stats.total_profit >= 0 ? 'var(--secondary)' : 'var(--danger)' }}>
+                      {stats.total_profit >= 0 ? '+' : ''}{stats.total_profit.toFixed(2)}
+                    </div>
+                    <div className="stat-label">PROFIT</div>
+                  </div>
+                  <div className="stat-display">
+                    <div className="stat-value">{stats.total_trades}</div>
+                    <div className="stat-label">TRADES</div>
+                  </div>
+                  <div className="stat-display">
+                    <div className="stat-value">{stats.win_rate.toFixed(0)}%</div>
+                    <div className="stat-label">WIN RATE</div>
+                  </div>
                 </div>
-                <div className="card-body">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="stat-box">
-                      <div className="stat-value">${stats.balance_usdc.toFixed(2)}</div>
-                      <div className="stat-label">Balance</div>
-                    </div>
-                    <div className="stat-box">
-                      <div className={`stat-value ${stats.total_profit >= 0 ? 'text-[var(--accent-green)]' : 'text-[var(--accent)]'}`}>
-                        {stats.total_profit >= 0 ? '+' : ''}${stats.total_profit.toFixed(2)}
+
+                {/* HP Bar */}
+                <div className="pixel-box p-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-[8px]">PORTFOLIO HP</span>
+                    <span className="text-[8px] text-[var(--primary)]">
+                      ${stats.balance_usdc.toFixed(0)}/500
+                    </span>
+                  </div>
+                  <div className="pixel-progress">
+                    <div 
+                      className="pixel-progress-fill"
+                      style={{ width: `${Math.min((stats.balance_usdc / 500) * 100, 100)}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Recent Trades */}
+                <div className="pixel-box">
+                  <div className="p-3 border-b-2 border-[var(--border)]">
+                    <span className="text-[8px] text-[var(--primary)]">▶ RECENT BATTLES</span>
+                  </div>
+                  <div className="p-2">
+                    {trades.length === 0 ? (
+                      <div className="text-center py-6 text-[var(--text-muted)]">
+                        <div className="text-2xl mb-2">🎴</div>
+                        <p className="text-[8px]">No trades yet!</p>
+                        <p className="text-[6px]">Deposit funds to start hunting</p>
                       </div>
-                      <div className="stat-label">Total P&L</div>
-                    </div>
-                    <div className="stat-box">
-                      <div className="stat-value">{stats.total_trades}</div>
-                      <div className="stat-label">Trades</div>
-                    </div>
-                    <div className="stat-box">
-                      <div className="stat-value">{stats.win_rate.toFixed(0)}%</div>
-                      <div className="stat-label">Win Rate</div>
-                    </div>
+                    ) : (
+                      trades.slice(0, 5).map(t => (
+                        <div key={t.id} className={`trade-entry ${t.type}`}>
+                          <div className="flex justify-between">
+                            <span className="text-[8px]">{t.type.toUpperCase()}</span>
+                            <span className="text-[8px]">${t.price_usd.toFixed(2)}</span>
+                          </div>
+                          <div className="text-[10px] text-[var(--primary)]">{t.card_name}</div>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
               </div>
+            )}
 
-              {/* Recent Activity */}
-              <div className="card">
-                <div className="card-header">
-                  <span>⚡</span> Recent Activity
+            {/* Pokemon Tab */}
+            {tab === 'pokemon' && (
+              <div className="pixel-box p-4">
+                <div className="text-center mb-4">
+                  <span className="text-[8px] text-[var(--primary)]">▶ CARD COLLECTION</span>
                 </div>
-                <div className="card-body p-0">
-                  {trades.length === 0 ? (
-                    <div className="p-8 text-center text-[var(--text-muted)]">
-                      <img src={POKEMON_SPRITES[1]} alt="Pikachu" className="w-16 h-16 mx-auto mb-4 pokemon-sprite opacity-50" />
-                      <p>No trades yet</p>
-                      <p className="text-sm">Waiting for wallet funding...</p>
+                {holdings.length === 0 ? (
+                  <div className="text-center py-8">
+                    <div className="flex justify-center gap-2 mb-4">
+                      {[25, 6, 150].map(id => (
+                        <img 
+                          key={id}
+                          src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`}
+                          className="w-16 h-16 pokemon-sprite opacity-30"
+                          alt=""
+                        />
+                      ))}
                     </div>
-                  ) : (
-                    trades.slice(0, 5).map(trade => (
-                      <div key={trade.id} className={`trade-row ${trade.type === 'buy' ? 'trade-buy' : 'trade-sell'}`}>
-                        <div className="flex-1">
-                          <div className="font-medium">{trade.card_name}</div>
-                          <div className="text-sm text-[var(--text-muted)]">
-                            {new Date(trade.timestamp).toLocaleString()}
+                    <p className="text-[10px] text-[var(--text-muted)]">Your party is empty!</p>
+                    <p className="text-[8px] text-[var(--text-muted)]">Deposit USDC to catch cards</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-4">
+                    {holdings.map(h => (
+                      <div key={h.card_id} className="card-frame">
+                        <div className="card-inner text-center">
+                          <div className="text-[10px] text-[var(--primary)]">{h.card_name}</div>
+                          <div className="text-[8px] text-[var(--text-muted)]">
+                            ${h.buy_price.toFixed(2)}
                           </div>
-                        </div>
-                        <div className="text-right">
-                          <div className={trade.type === 'buy' ? 'text-[var(--accent-green)]' : 'text-[var(--accent)]'}>
-                            {trade.type === 'buy' ? 'BUY' : 'SELL'} ${trade.price_usd.toFixed(2)}
-                          </div>
-                          {trade.profit_usd !== undefined && (
-                            <div className={`text-sm ${trade.profit_usd >= 0 ? 'greentext' : 'redtext'}`}>
-                              {trade.profit_usd >= 0 ? '+' : ''}${trade.profit_usd.toFixed(2)}
-                            </div>
-                          )}
                         </div>
                       </div>
-                    ))
-                  )}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
-            </div>
+            )}
 
-            {/* Sidebar */}
-            <div className="space-y-6">
-              {/* Wallet */}
-              <div className="card">
-                <div className="card-header">
-                  <span>💳</span> Wallet
+            {/* Bag Tab */}
+            {tab === 'bag' && (
+              <div className="pixel-box p-4">
+                <div className="text-center mb-4">
+                  <span className="text-[8px] text-[var(--primary)]">▶ TRAINER BAG</span>
                 </div>
-                <div className="card-body">
-                  <div className="mono text-xs break-all p-3 bg-[var(--bg-alt)] rounded mb-4">
-                    {WALLET}
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center p-3 bg-[var(--bg)] border-2 border-[var(--border)]">
+                    <span className="text-[8px]">💰 USDC</span>
+                    <span className="text-[10px] text-[var(--primary)]">${stats.balance_usdc.toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between text-sm mb-2">
-                    <span className="text-[var(--text-muted)]">USDC</span>
-                    <span className="font-medium">${stats.balance_usdc.toFixed(2)}</span>
+                  <div className="flex justify-between items-center p-3 bg-[var(--bg)] border-2 border-[var(--border)]">
+                    <span className="text-[8px]">⛽ MATIC</span>
+                    <span className="text-[10px] text-[var(--primary)]">{stats.balance_matic.toFixed(4)}</span>
                   </div>
-                  <div className="flex justify-between text-sm mb-4">
-                    <span className="text-[var(--text-muted)]">MATIC (gas)</span>
-                    <span className="font-medium">{stats.balance_matic.toFixed(4)}</span>
+                  <div className="flex justify-between items-center p-3 bg-[var(--bg)] border-2 border-[var(--border)]">
+                    <span className="text-[8px]">🎴 CARDS</span>
+                    <span className="text-[10px] text-[var(--primary)]">{holdings.length}</span>
                   </div>
+                  
+                  <div className="mt-6 p-3 bg-[var(--bg)] border-2 border-[var(--border)]">
+                    <div className="text-[6px] text-[var(--text-muted)] mb-2">WALLET ADDRESS</div>
+                    <div className="text-[6px] break-all text-[var(--primary)]">{WALLET}</div>
+                  </div>
+                  
                   <a 
                     href={`https://polygonscan.com/address/${WALLET}`}
                     target="_blank"
-                    className="block text-center py-2 border border-[var(--border)] rounded text-sm hover:bg-[var(--bg-alt)] transition"
+                    className="pixel-btn block text-center text-[8px]"
                   >
-                    View on PolygonScan →
+                    VIEW ON POLYGONSCAN →
                   </a>
                 </div>
               </div>
+            )}
 
-              {/* Strategy */}
-              <div className="card">
-                <div className="card-header">
-                  <span>🎯</span> Strategy
+            {/* Brain Tab */}
+            {tab === 'brain' && (
+              <div className="pixel-box p-4">
+                <div className="text-center mb-4">
+                  <span className="text-[8px] text-[var(--primary)]">▶ AGENT THOUGHTS</span>
                 </div>
-                <div className="card-body text-sm space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-[var(--text-muted)]">Buy Threshold</span>
-                    <span className="greentext font-medium">-15% below fair value</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-[var(--text-muted)]">Profit Target</span>
-                    <span className="greentext font-medium">+10%</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-[var(--text-muted)]">Stop Loss</span>
-                    <span className="redtext font-medium">-20%</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-[var(--text-muted)]">Max Position</span>
-                    <span className="font-medium">$100/card</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Quick Intel */}
-              {intel && (
-                <div className="card">
-                  <div className="card-header">
-                    <span>🔥</span> Trending
-                  </div>
-                  <div className="card-body text-sm">
-                    {intel.trending?.slice(0, 5).map((t, i) => (
-                      <div key={i} className="flex justify-between py-1">
-                        <span>{t.card}</span>
-                        <span className="text-[var(--text-muted)]">{t.change || `+${t.score}`}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Portfolio Tab */}
-        {tab === 'portfolio' && (
-          <div className="card">
-            <div className="card-header">
-              <span>🎴</span> Current Holdings ({holdings.length})
-            </div>
-            <div className="card-body">
-              {holdings.length === 0 ? (
-                <div className="text-center py-12 text-[var(--text-muted)]">
-                  <div className="flex justify-center gap-2 mb-4">
-                    {POKEMON_SPRITES.slice(0, 3).map((src, i) => (
-                      <img key={i} src={src} alt="" className="w-12 h-12 pokemon-sprite opacity-30" />
-                    ))}
-                  </div>
-                  <p className="text-lg mb-2">No cards in portfolio</p>
-                  <p className="text-sm">Fund the wallet to start catching deals!</p>
-                </div>
-              ) : (
-                <table className="table">
-                  <thead>
-                    <tr>
-                      <th>Card</th>
-                      <th>Buy Price</th>
-                      <th>Current</th>
-                      <th>P&L</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {holdings.map(h => (
-                      <tr key={h.card_id}>
-                        <td className="font-medium">{h.card_name}</td>
-                        <td className="mono">${h.buy_price.toFixed(2)}</td>
-                        <td className="mono">${(h.current_price || h.buy_price).toFixed(2)}</td>
-                        <td className={`mono ${(h.pnl_pct || 0) >= 0 ? 'greentext' : 'redtext'}`}>
-                          {(h.pnl_pct || 0) >= 0 ? '+' : ''}{(h.pnl_pct || 0).toFixed(1)}%
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Trades Tab */}
-        {tab === 'trades' && (
-          <div className="card">
-            <div className="card-header">
-              <span>📜</span> Trade History
-            </div>
-            <div className="card-body p-0">
-              {trades.length === 0 ? (
-                <div className="p-12 text-center text-[var(--text-muted)]">
-                  <p>No trades executed yet</p>
-                </div>
-              ) : (
-                <table className="table">
-                  <thead>
-                    <tr>
-                      <th>Date</th>
-                      <th>Type</th>
-                      <th>Card</th>
-                      <th>Price</th>
-                      <th>P&L</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {trades.map(t => (
-                      <tr key={t.id}>
-                        <td className="mono text-sm">{new Date(t.timestamp).toLocaleString()}</td>
-                        <td>
-                          <span className={`badge ${t.type === 'buy' ? 'badge-online' : 'badge-offline'}`}>
-                            {t.type.toUpperCase()}
-                          </span>
-                        </td>
-                        <td className="font-medium">{t.card_name}</td>
-                        <td className="mono">${t.price_usd.toFixed(2)}</td>
-                        <td className={`mono ${(t.profit_usd || 0) >= 0 ? 'greentext' : 'redtext'}`}>
-                          {t.profit_usd !== undefined ? `${t.profit_usd >= 0 ? '+' : ''}$${t.profit_usd.toFixed(2)}` : '-'}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Intel Tab */}
-        {tab === 'intel' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="card">
-              <div className="card-header">
-                <span>📊</span> Market Sentiment
-              </div>
-              <div className="card-body">
-                <div className={`text-3xl font-bold mb-4 ${
-                  intel?.sentiment === 'bullish' ? 'text-[var(--accent-green)]' :
-                  intel?.sentiment === 'bearish' ? 'text-[var(--accent)]' : 
-                  'text-[var(--accent-gold)]'
-                }`}>
-                  {intel?.sentiment?.toUpperCase() || 'NEUTRAL'}
-                </div>
-                <div className="space-y-2 text-sm">
-                  <div className="font-medium mb-2">Data Sources:</div>
-                  {intel?.sources?.reddit?.map((s, i) => (
-                    <div key={i} className="text-[var(--text-muted)]">📰 {s}</div>
-                  ))}
-                  {intel?.sources?.prices?.map((s, i) => (
-                    <div key={i} className="text-[var(--text-muted)]">💰 {s}</div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="card">
-              <div className="card-header">
-                <span>🎯</span> Recommendations
-              </div>
-              <div className="card-body">
-                {intel?.recommendations?.map((rec, i) => (
-                  <div key={i} className="p-3 border border-[var(--border)] rounded mb-3">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className={`badge ${
-                        rec.action === 'buy' ? 'badge-online' : 
-                        rec.action === 'sell' ? 'badge-offline' : 
-                        'badge-scanning'
-                      }`}>
-                        {rec.action.toUpperCase()}
-                      </span>
-                      <span className="font-medium">{rec.card}</span>
+                <div className="space-y-2 max-h-64 overflow-y-auto">
+                  {[
+                    { time: '02:28', type: 'SCAN', msg: 'Checking r/PokemonTCG...' },
+                    { time: '02:27', type: 'ANALYSIS', msg: 'Charizard VMAX: 8% below fair value' },
+                    { time: '02:26', type: 'DECISION', msg: 'Need 15%+ discount to buy' },
+                    { time: '02:25', type: 'SCAN', msg: 'Monitoring TCGPlayer prices...' },
+                    { time: '02:24', type: 'LEARN', msg: 'No trades yet - building knowledge' },
+                  ].map((t, i) => (
+                    <div key={i} className="p-2 bg-[var(--bg)] border border-[var(--border)] text-[8px]">
+                      <span className="text-[var(--text-muted)]">[{t.time}]</span>
+                      <span className={`ml-2 ${
+                        t.type === 'SCAN' ? 'text-[var(--info)]' :
+                        t.type === 'ANALYSIS' ? 'text-[var(--primary)]' :
+                        t.type === 'DECISION' ? 'text-[var(--secondary)]' :
+                        'text-purple-400'
+                      }`}>[{t.type}]</span>
+                      <span className="ml-2">{t.msg}</span>
                     </div>
-                    <p className="text-sm text-[var(--text-muted)]">{rec.reason}</p>
-                    {rec.confidence && (
-                      <div className="mt-2">
-                        <div className="text-xs text-[var(--text-muted)] mb-1">Confidence: {rec.confidence}%</div>
-                        <div className="progress">
-                          <div className="progress-fill" style={{ width: `${rec.confidence}%` }} />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )) || <p className="text-[var(--text-muted)]">Analyzing market data...</p>}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Brain Tab */}
-        {tab === 'brain' && (
-          <div className="card">
-            <div className="card-header">
-              <span>💭</span> Agent Thoughts
-              <span className="ml-auto text-xs text-[var(--text-muted)]">
-                Live feed of agent decision making
-              </span>
-            </div>
-            <div className="card-body p-0 max-h-[600px] overflow-y-auto">
-              {thoughts.map((t, i) => (
-                <div key={i} className="log-entry px-4">
-                  <span className="log-time">{new Date(t.timestamp).toLocaleTimeString()}</span>
-                  <span className={`inline-block w-20 ${
-                    t.type === 'scan' ? 'text-[var(--accent-blue)]' :
-                    t.type === 'analysis' ? 'text-[var(--accent-gold)]' :
-                    t.type === 'decision' ? 'text-[var(--accent-green)]' :
-                    t.type === 'trade' ? 'text-[var(--accent)]' :
-                    'text-purple-600'
-                  }`}>
-                    [{t.type.toUpperCase()}]
-                  </span>
-                  {t.message}
+                  ))}
                 </div>
-              ))}
-            </div>
+                
+                <div className="mt-4 pixel-box p-3">
+                  <div className="text-[6px] text-[var(--text-muted)] mb-2">STRATEGY</div>
+                  <div className="grid grid-cols-3 gap-2 text-center">
+                    <div>
+                      <div className="text-[var(--secondary)] text-[10px]">-15%</div>
+                      <div className="text-[6px] text-[var(--text-muted)]">BUY</div>
+                    </div>
+                    <div>
+                      <div className="text-[var(--primary)] text-[10px]">+10%</div>
+                      <div className="text-[6px] text-[var(--text-muted)]">SELL</div>
+                    </div>
+                    <div>
+                      <div className="text-[var(--danger)] text-[10px]">-20%</div>
+                      <div className="text-[6px] text-[var(--text-muted)]">STOP</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
-        )}
+        </div>
+
+        {/* Message Box */}
+        <div className="message-box">
+          <span className="text-[10px]">{message}</span>
+        </div>
 
         {/* Footer */}
-        <footer className="mt-8 pt-6 border-t border-[var(--border)] text-center text-sm text-[var(--text-muted)]">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            {POKEMON_SPRITES.map((src, i) => (
-              <img key={i} src={src} alt="" className="w-6 h-6 pokemon-sprite opacity-50" />
+        <div className="mt-6 text-center">
+          <div className="flex justify-center gap-2 mb-2">
+            {[6, 25, 150, 249, 384].map(id => (
+              <img 
+                key={id}
+                src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`}
+                className="w-8 h-8 pokemon-sprite opacity-50"
+                alt=""
+              />
             ))}
           </div>
-          <p>PokeTrader v1.0 • Open Source • Last updated: {lastUpdate.toLocaleTimeString()}</p>
-          <p className="mt-1">Not financial advice. Trade at your own risk.</p>
-        </footer>
+          <p className="text-[6px] text-[var(--text-muted)]">
+            POKETRADER v1.0 • 
+            <a href="https://github.com/hazarkemal/poke-trader" target="_blank" className="text-[var(--info)]"> GITHUB</a> • 
+            OPEN SOURCE
+          </p>
+        </div>
       </div>
     </main>
   );
