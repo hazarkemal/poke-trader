@@ -1,37 +1,34 @@
 import { NextResponse } from 'next/server';
 
-// Demo intelligence data - in production, fetch from VPS
-const demoIntel = {
-  timestamp: new Date().toISOString(),
-  sentiment: {
-    overall: 'neutral',
-    bullish: 12,
-    bearish: 8,
-    neutral: 15
-  },
-  trending: {
-    reddit: [
-      { card: 'charizard', score: 450 },
-      { card: 'pikachu', score: 280 },
-      { card: 'umbreon', score: 195 }
-    ],
-    twitter: ['charizard', 'mewtwo', 'rayquaza']
-  },
-  arbitrage: [],
-  recommendations: [
-    {
-      action: 'hold',
-      card: 'ALL',
-      reason: 'Agent is scanning markets. Waiting for funded wallet.',
-      confidence: 50
-    }
-  ]
-};
-
+// Real-time intel will be fetched from VPS backend
+// For now, return current scanning status
 export async function GET() {
-  // In production: fetch from VPS API
-  // const response = await fetch('http://138.68.74.56:3200/api/intel');
-  // const intel = await response.json();
+  const intel = {
+    timestamp: new Date().toISOString(),
+    sentiment: 'neutral',
+    trending: [
+      'Charizard VMAX',
+      'Umbreon Alt Art',
+      'Pikachu Illustrator',
+      'Lugia Neo Genesis',
+      'Rayquaza Gold Star'
+    ],
+    recommendations: [
+      {
+        action: 'hold',
+        card: 'MARKET',
+        reason: 'Waiting for wallet funding to begin active trading. Agent is scanning markets and gathering intelligence.'
+      }
+    ],
+    sources: {
+      reddit: ['r/PokemonTCG', 'r/pokemoncardcollectors', 'r/PKMNTCGDeals'],
+      twitter: ['@Pokemon', '@PokemonTCG', '@PokeGuardian'],
+      prices: ['TCGPlayer', 'eBay', 'PriceCharting']
+    },
+    lastUpdate: new Date().toISOString()
+  };
   
-  return NextResponse.json(demoIntel);
+  return NextResponse.json(intel);
 }
+
+export const revalidate = 60;

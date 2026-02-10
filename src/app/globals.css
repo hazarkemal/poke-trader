@@ -2,39 +2,142 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+
 :root {
-  --pokemon-yellow: #FFCB05;
-  --pokemon-blue: #3D7DCA;
-  --pokemon-red: #FF0000;
+  --poke-red: #CC0000;
+  --poke-blue: #3B4CCA;
+  --poke-yellow: #FFDE00;
+  --poke-gold: #B3A125;
+  --gameboy-green: #0f380f;
+  --gameboy-light: #9bbc0f;
+  --gameboy-dark: #306230;
+}
+
+* {
+  image-rendering: pixelated;
 }
 
 body {
-  background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 50%, #0f0f23 100%);
+  font-family: 'VT323', monospace;
+  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  min-height: 100vh;
 }
 
-.card-glow {
-  box-shadow: 0 0 20px rgba(255, 203, 5, 0.3);
+.pixel-font {
+  font-family: 'Press Start 2P', cursive;
 }
 
-.stat-card {
-  background: linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
-  border: 1px solid rgba(255,255,255,0.1);
-  backdrop-filter: blur(10px);
+.retro-card {
+  background: linear-gradient(145deg, #2d2d44 0%, #1a1a2e 100%);
+  border: 4px solid #ffde00;
+  border-radius: 0;
+  box-shadow: 
+    8px 8px 0 #000,
+    inset 2px 2px 0 rgba(255,255,255,0.1);
+  position: relative;
+}
+
+.retro-card::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, #cc0000, #3b4cca, #ffde00, #cc0000);
+  z-index: -1;
+  filter: blur(4px);
+  opacity: 0.5;
+}
+
+.pokeball-bg {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='none' stroke='%23333' stroke-width='2'/%3E%3Cpath d='M5 50h90' stroke='%23333' stroke-width='2'/%3E%3Ccircle cx='50' cy='50' r='12' fill='none' stroke='%23333' stroke-width='2'/%3E%3C/svg%3E");
+  background-size: 50px;
+  background-repeat: repeat;
+  opacity: 0.05;
+}
+
+.stat-value {
+  font-family: 'Press Start 2P', cursive;
+  color: #9bbc0f;
+  text-shadow: 2px 2px 0 #0f380f;
+}
+
+.pixel-border {
+  border: 4px solid;
+  border-image: linear-gradient(45deg, #ffde00, #cc0000) 1;
+}
+
+.trade-row {
+  border-left: 4px solid;
+  transition: all 0.2s;
+}
+
+.trade-row:hover {
+  transform: translateX(4px);
 }
 
 .trade-buy {
-  border-left: 4px solid #10b981;
+  border-left-color: #00ff00;
+  background: linear-gradient(90deg, rgba(0,255,0,0.1) 0%, transparent 100%);
 }
 
 .trade-sell {
-  border-left: 4px solid #ef4444;
+  border-left-color: #ff0000;
+  background: linear-gradient(90deg, rgba(255,0,0,0.1) 0%, transparent 100%);
 }
 
-@keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 20px rgba(255, 203, 5, 0.3); }
-  50% { box-shadow: 0 0 40px rgba(255, 203, 5, 0.6); }
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
 }
 
-.live-indicator {
-  animation: pulse-glow 2s infinite;
+.blink {
+  animation: blink 1s infinite;
+}
+
+@keyframes scan {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+
+.scan-line {
+  position: absolute;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #9bbc0f, transparent);
+  animation: scan 2s linear infinite;
+}
+
+.crt-effect {
+  position: relative;
+}
+
+.crt-effect::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.1),
+    rgba(0, 0, 0, 0.1) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+  pointer-events: none;
+}
+
+.pokemon-card-frame {
+  background: linear-gradient(135deg, #f7d02c 0%, #eec32d 50%, #d4a017 100%);
+  padding: 8px;
+  border-radius: 12px;
+}
+
+.typing-cursor::after {
+  content: '▋';
+  animation: blink 0.7s infinite;
 }
