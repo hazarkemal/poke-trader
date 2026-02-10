@@ -38,7 +38,7 @@ export default function Dashboard() {
   const [holdings, setHoldings] = useState<Holding[]>([]);
   const [tab, setTab] = useState<'status' | 'pokemon' | 'bag' | 'brain'>('status');
   const [message, setMessage] = useState('');
-  const [fullMessage] = useState('POKETRADER is scanning markets for rare cards...');
+  const [fullMessage] = useState('POKETRAIDER is scanning markets for rare cards...');
   const [msgIndex, setMsgIndex] = useState(0);
 
   // Typewriter effect
@@ -82,7 +82,7 @@ export default function Dashboard() {
             className="w-12 h-12 pokemon-sprite"
           />
           <div>
-            <h1 className="text-sm text-white">POKETRADER</h1>
+            <h1 className="text-sm text-white">POKETRAIDER</h1>
             <p className="text-[9px] text-red-200">AUTONOMOUS CARD HUNTER v1.0</p>
           </div>
           <div className="ml-auto flex items-center gap-4">
@@ -329,7 +329,7 @@ export default function Dashboard() {
             ))}
           </div>
           <p className="text-[9px] text-[var(--text-muted)]">
-            POKETRADER v1.0 • 
+            POKETRAIDER v1.0 • 
             <a href="https://github.com/hazarkemal/poke-trader" target="_blank" className="text-[var(--info)]"> GITHUB</a> • 
             OPEN SOURCE
           </p>

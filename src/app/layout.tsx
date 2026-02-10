@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'PokeTrader - Autonomous Pokemon Card Trading Agent',
+  title: 'PokeTraider - Autonomous Pokemon Card Trading Agent',
   description: 'AI-powered Pokemon card trading on Courtyard.io',
 };
 
