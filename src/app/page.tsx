@@ -42,10 +42,11 @@ interface Holding {
 
 interface Intel {
   sentiment: string;
-  trending: { card: string; score: number }[];
+  trending: { card: string; score: number; change?: string }[];
   recommendations: { action: string; card: string; reason: string; confidence: number }[];
   sources: { reddit: string[]; twitter: string[]; prices: string[] };
   lastScan: string;
+  marketMetrics?: { totalVolume24h: string; avgPriceChange: string; topGainer: string; topLoser: string };
 }
 
 interface ThoughtLog {
@@ -306,8 +307,8 @@ export default function Dashboard() {
                   <div className="card-body text-sm">
                     {intel.trending?.slice(0, 5).map((t, i) => (
                       <div key={i} className="flex justify-between py-1">
-                        <span>{t.card || t}</span>
-                        {t.score && <span className="text-[var(--text-muted)]">+{t.score}</span>}
+                        <span>{t.card}</span>
+                        <span className="text-[var(--text-muted)]">{t.change || `+${t.score}`}</span>
                       </div>
                     ))}
                   </div>
