@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --pokemon-yellow: #FFCB05;
+  --pokemon-blue: #3D7DCA;
+  --pokemon-red: #FF0000;
+}
+
+body {
+  background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 50%, #0f0f23 100%);
+}
+
+.card-glow {
+  box-shadow: 0 0 20px rgba(255, 203, 5, 0.3);
+}
+
+.stat-card {
+  background: linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+  border: 1px solid rgba(255,255,255,0.1);
+  backdrop-filter: blur(10px);
+}
+
+.trade-buy {
+  border-left: 4px solid #10b981;
+}
+
+.trade-sell {
+  border-left: 4px solid #ef4444;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(255, 203, 5, 0.3); }
+  50% { box-shadow: 0 0 40px rgba(255, 203, 5, 0.6); }
+}
+
+.live-indicator {
+  animation: pulse-glow 2s infinite;
+}
